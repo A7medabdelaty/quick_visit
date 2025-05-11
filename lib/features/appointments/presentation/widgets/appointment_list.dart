@@ -54,6 +54,8 @@ class AppointmentList extends StatelessWidget {
     final int? daysAgo =
         isActive ? null : now.difference(appointmentDate).inDays;
 
+    final bool isWithin24Hours = appointmentDate.difference(now).inHours <= 24;
+
     final DateFormat dateFormatter = DateFormat('dd MMM yyyy');
     final String formattedDate = dateFormatter.format(appointmentDate);
 
@@ -63,16 +65,17 @@ class AppointmentList extends StatelessWidget {
       date: formattedDate,
       time: appointment.selectedTime,
       location: appointment.location,
-      showActions: isActive,
-      daysAgo: daysAgo,
+      showActions: isActive && !isWithin24Hours,
+      isCanceled: appointment.status.name == 'canceled',
+      daysAgo: appointment.status.name == 'canceled' ? null : daysAgo,
       onReschedule:
-          isActive
+          isActive && !isWithin24Hours
               ? () {
                 _showRescheduleDialog(context, appointment);
               }
               : null,
       onCancel:
-          isActive
+          isActive && !isWithin24Hours
               ? () {
                 _showCancelConfirmation(context, appointment);
               }
@@ -80,23 +83,27 @@ class AppointmentList extends StatelessWidget {
     );
   }
 
-  void _showRescheduleDialog(BuildContext context, Appointment appointment) {
-    final appointmentBloc = BlocProvider.of<AppointmentBloc>(context);
-
-    showDialog(
-      context: context,
-      builder:
-          (dialogContext) => BlocProvider<AppointmentBloc>.value(
-            value: appointmentBloc,
-            child: RescheduleDialog(
-              appointment: appointment,
-              doctorRepository: DoctorRepositoryImpl(),
-            ),
-          ),
-    );
-  }
-
   void _showCancelConfirmation(BuildContext context, Appointment appointment) {
+    final List<String> dateParts = appointment.selectedDate.split('/');
+    final DateTime appointmentDate = DateTime(
+      int.parse(dateParts[2]),
+      int.parse(dateParts[1]),
+      int.parse(dateParts[0]),
+    );
+
+    final DateTime now = DateTime.now();
+    final bool isWithin24Hours = appointmentDate.difference(now).inHours <= 24;
+
+    if (isWithin24Hours) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Cannot cancel appointments within 24 hours'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     showDialog(
       context: context,
       builder:
@@ -116,16 +123,45 @@ class AppointmentList extends StatelessWidget {
                   context.read<AppointmentBloc>().add(
                     CancelAppointment(appointment.id),
                   );
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Appointment canceled successfully'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
                 },
                 child: const Text('Yes'),
               ),
             ],
+          ),
+    );
+  }
+
+  void _showRescheduleDialog(BuildContext context, Appointment appointment) {
+    final List<String> dateParts = appointment.selectedDate.split('/');
+    final DateTime appointmentDate = DateTime(
+      int.parse(dateParts[2]),
+      int.parse(dateParts[1]),
+      int.parse(dateParts[0]),
+    );
+
+    final DateTime now = DateTime.now();
+    final bool isWithin24Hours = appointmentDate.difference(now).inHours <= 24;
+
+    if (isWithin24Hours) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Cannot reschedule appointments within 24 hours'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final appointmentBloc = BlocProvider.of<AppointmentBloc>(context);
+    showDialog(
+      context: context,
+      builder:
+          (dialogContext) => BlocProvider<AppointmentBloc>.value(
+            value: appointmentBloc,
+            child: RescheduleDialog(
+              appointment: appointment,
+              doctorRepository: DoctorRepositoryImpl(),
+            ),
           ),
     );
   }

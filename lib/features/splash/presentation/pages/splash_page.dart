@@ -4,6 +4,7 @@ import 'package:service_reservation_system/core/constants/asset_paths.dart';
 import 'package:service_reservation_system/core/extensions/build_context_extension.dart';
 import 'package:service_reservation_system/core/widgets/app_image.dart';
 import 'package:service_reservation_system/features/auth/presentation/bloc/auth_event.dart';
+import 'package:service_reservation_system/features/splash/presentation/widgets/loading_painter.dart';
 
 import '../../../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../../../features/auth/presentation/bloc/auth_state.dart';
@@ -21,6 +22,7 @@ class _SplashPageState extends State<SplashPage>
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
+  late Animation<double> _loadingAnimation;
 
   @override
   void initState() {
@@ -31,7 +33,7 @@ class _SplashPageState extends State<SplashPage>
 
   void _setupAnimations() {
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 1500),
+      duration: const Duration(milliseconds: 2000),
       vsync: this,
     );
 
@@ -45,15 +47,21 @@ class _SplashPageState extends State<SplashPage>
     _scaleAnimation = Tween<double>(begin: 0.5, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: const Interval(0.3, 0.8, curve: Curves.easeOutBack),
+        curve: const Interval(0.3, 0.8, curve: Curves.elasticOut),
       ),
     );
 
-    _controller.forward();
+    _loadingAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.6, 1.0, curve: Curves.easeInOut),
+      ),
+    );
+
+    _controller.repeat();
   }
 
   void _checkAuthStatus() {
-    // Delay auth check slightly to allow animations to start
     Future.delayed(const Duration(milliseconds: 100), () {
       if (mounted) {
         context.read<AuthBloc>().add(AuthCheckStatusEvent());
@@ -82,6 +90,7 @@ class _SplashPageState extends State<SplashPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthAuthenticated) {
@@ -103,17 +112,35 @@ class _SplashPageState extends State<SplashPage>
                     children: [
                       const AppImage(
                         path: AssetPaths.logo,
-                        width: 100,
-                        height: 100,
+                        width: 120,
+                        height: 120,
                       ),
-                      const SizedBox(height: 24),
-                      const CircularProgressIndicator(),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 32),
+                      SizedBox(
+                        width: 60,
+                        height: 60,
+                        child: CustomPaint(
+                          painter: LoadingPainter(
+                            animation: _loadingAnimation,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 32),
                       Text(
-                        'Service Reservation',
+                        'Quick Visit',
                         style: TextStyle(
-                          fontSize: context.sp(24),
+                          fontSize: context.sp(28),
                           fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Book appointments easily',
+                        style: TextStyle(
+                          fontSize: context.sp(16),
+                          color: Theme.of(context).colorScheme.secondary,
                         ),
                       ),
                     ],

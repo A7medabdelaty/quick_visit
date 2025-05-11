@@ -140,9 +140,16 @@ class _BookingPageState extends State<BookingPage> {
     );
 
     showModalBottomSheet<PatientDetails>(
+      useSafeArea: true,
       context: context,
       isScrollControlled: true,
-      builder: (context) => const AddPatientBottomSheet(),
+      builder:
+          (context) => Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: const AddPatientBottomSheet(),
+          ),
     ).then((patientDetails) {
       if (patientDetails != null) {
         final appointment = Appointment(

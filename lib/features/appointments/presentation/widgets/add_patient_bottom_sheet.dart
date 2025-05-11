@@ -78,12 +78,6 @@ class _AddPatientBottomSheetState extends State<AddPatientBottomSheet> {
                 onChanged: (value) => setState(() => selectedGender = value),
               ),
               const Text('Female'),
-              Radio<String>(
-                value: 'Others',
-                groupValue: selectedGender,
-                onChanged: (value) => setState(() => selectedGender = value),
-              ),
-              const Text('Others'),
             ],
           ),
           const SizedBox(height: 16),

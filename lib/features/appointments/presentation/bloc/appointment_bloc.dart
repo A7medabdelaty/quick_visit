@@ -40,7 +40,7 @@ class AppointmentBloc extends Bloc<AppointmentEvent, AppointmentState> {
               .collection('users')
               .doc(user.uid)
               .collection('appointments')
-              .where('status', isEqualTo: 'active')
+              .where('status', isEqualTo: AppointmentStatus.active.name)
               .orderBy('selectedDate', descending: false)
               .get();
 
@@ -70,7 +70,13 @@ class AppointmentBloc extends Bloc<AppointmentEvent, AppointmentState> {
               .collection('users')
               .doc(user.uid)
               .collection('appointments')
-              .where('status', isEqualTo: 'completed')
+              .where(
+                'status',
+                whereIn: [
+                  AppointmentStatus.canceled.name,
+                  AppointmentStatus.finished.name,
+                ],
+              )
               .orderBy('selectedDate', descending: true)
               .get();
 
@@ -142,18 +148,41 @@ class AppointmentBloc extends Bloc<AppointmentEvent, AppointmentState> {
     try {
       emit(AppointmentLoading());
 
-      await _repository.updateAppointmentStatus(
-        event.appointmentId,
-        AppointmentStatus.canceled,
-      );
-
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) {
         emit(AppointmentError('User not authenticated'));
         return;
       }
 
-      final appointments = await _repository.getActiveAppointments(user.uid);
+      final appointmentDoc =
+          await FirebaseFirestore.instance
+              .collection('appointments')
+              .doc(event.appointmentId)
+              .get();
+
+      await _repository.updateAppointmentStatus(
+        event.appointmentId,
+        AppointmentStatus.canceled,
+      );
+
+      if (appointmentDoc.exists) {
+        await FirebaseFirestore.instance
+            .collection('appointments')
+            .doc(event.appointmentId)
+            .update({'status': AppointmentStatus.canceled.name});
+      }
+
+      final snapshot =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .collection('appointments')
+              .where('status', isEqualTo: AppointmentStatus.active.name)
+              .orderBy('selectedDate', descending: false)
+              .get();
+
+      final appointments =
+          snapshot.docs.map((doc) => Appointment.fromMap(doc.data())).toList();
 
       emit(AppointmentSuccess(appointments));
     } catch (e) {

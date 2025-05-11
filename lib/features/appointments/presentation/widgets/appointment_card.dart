@@ -13,6 +13,7 @@ class AppointmentCard extends StatelessWidget {
   final VoidCallback? onCancel;
   final bool showActions;
   final int? daysAgo;
+  final bool isCanceled;
 
   const AppointmentCard({
     super.key,
@@ -26,6 +27,7 @@ class AppointmentCard extends StatelessWidget {
     this.onCancel,
     this.showActions = true,
     this.daysAgo,
+    this.isCanceled = false,
   });
 
   @override
@@ -36,7 +38,7 @@ class AppointmentCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (daysAgo != null)
+          if (daysAgo != null && !isCanceled)
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
               child: Text(
@@ -44,6 +46,18 @@ class AppointmentCard extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          if (isCanceled)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              child: Text(
+                'Canceled',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.errorLight,
                 ),
               ),
             ),
@@ -57,9 +71,13 @@ class AppointmentCard extends StatelessWidget {
               width: 80,
               height: 80,
             ),
-            title: Text(
-              doctorName,
-              style: const TextStyle(fontWeight: FontWeight.bold),
+            title: Row(
+              children: [
+                Text(
+                  doctorName,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ],
             ),
             subtitle: Text(specialty),
           ),
@@ -104,7 +122,7 @@ class AppointmentCard extends StatelessWidget {
               ),
             ),
           ],
-          if (!showActions)
+          if (!showActions && !isCanceled)
             Padding(
               padding: const EdgeInsets.all(16),
               child: ElevatedButton(
@@ -124,6 +142,7 @@ class AppointmentCard extends StatelessWidget {
                 ),
               ),
             ),
+          SizedBox(height: 10),
         ],
       ),
     );

@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:service_reservation_system/core/widgets/custom_button.dart';
 
 import '../bloc/auth_state.dart';
 
 class AuthSubmitButton extends StatelessWidget {
   final AuthState state;
   final String label;
-  final VoidCallback? onPressed;
+  final VoidCallback onPressed;
 
   const AuthSubmitButton({
     super.key,
@@ -16,12 +17,10 @@ class AuthSubmitButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ElevatedButton(
-      onPressed: state is AuthLoading ? null : onPressed,
-      child:
-          state is AuthLoading
-              ? const CircularProgressIndicator()
-              : Text(label),
+    return CustomButton(
+      onPressed: onPressed,
+      text: label,
+      isLoading: state is AuthLoading,
     );
   }
 }

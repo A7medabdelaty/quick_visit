@@ -53,7 +53,7 @@ class _MyAppointmentsPageState extends State<MyAppointmentsPage>
           title: const Text('My Appointments'),
           bottom: TabBar(
             controller: _tabController,
-            tabs: const [Tab(text: 'Actives'), Tab(text: 'Previews')],
+            tabs: const [Tab(text: 'Upcoming'), Tab(text: 'History')],
           ),
         ),
         body: TabBarView(
